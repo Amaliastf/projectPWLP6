@@ -22,3 +22,4 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::resource('mahasiswas', MahasiswaController::class);
+Route::get('mahasiswas/nilai/{Nim}', [MahasiswaController::class, 'nilai']);

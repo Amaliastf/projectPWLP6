@@ -168,4 +168,9 @@ Mahasiswa::find($Nim)->delete();
 return redirect()->route('mahasiswas.index')
 -> with('success', 'Mahasiswa Berhasil Dihapus');
     }
+    public function nilai($Nim)
+    {
+        $Mahasiswa = Mahasiswa::find($Nim);
+        return view('mahasiswas.nilai', compact('Mahasiswa'));
+    }
 };
