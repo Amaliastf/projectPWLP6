@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
+use App\Models\Kelas; 
+use illuminate\Support\Facades\DB;
 
 class MahasiswaController extends Controller
 {
@@ -14,16 +16,30 @@ class MahasiswaController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->has('search')) {
-            $mahasiswas = Mahasiswa::where('Nama', 'LIKE', '%'. request('search') . '%')->paginate(5);
-            return view('mahasiswas.index', ['mahasiswas' => $mahasiswas]);
-        }else{
-        //fungsi eloquent menampilkan data menggunakan pagination
-        // $mahasiswas = Mahasiswa::all(); // Mengambil semua isi tabel
-        $mahasiswas = Mahasiswa::orderBy('Nim', 'desc')->paginate(5);
-        return view('mahasiswas.index', compact('mahasiswas'))
-        ->with('i', (request()->input('page', 1) - 1) * 5);
-        }
+        // $user = Auth::index();
+        //$mahasiswas = Mahasiswa::paginate(5);
+        //return view('mahasiswas.index', compact('mahasiswas'))->with('i', (request()->input('page', 1) - 1) * 5);
+        
+        // if ($request->has('search')) {
+        //     $mahasiswas = Mahasiswa::where('Nama', 'LIKE', '%'. request('search') . '%')->paginate(5);
+        //     return view('mahasiswas.index', ['mahasiswas' => $mahasiswas]);
+        // }else{
+        // //fungsi eloquent menampilkan data menggunakan pagination
+        // // $mahasiswas = Mahasiswa::all(); // Mengambil semua isi tabel
+        // $mahasiswas = Mahasiswa::orderBy('Nim', 'desc')->paginate(5);
+        // return view('mahasiswas.index', compact('mahasiswas'))
+        // ->with('i', (request()->input('page', 1) - 1) * 5);
+        // }
+        $mahasiswas = Mahasiswa::where([
+            ['Nama', '!=', Null],
+            [function ($query) use ($request){
+                if(($search = $request->search)){
+                    $query->orwhere('Nama', 'Like', '%' . $search . '%')->get();
+                }
+            }]
+        ])->paginate(5);
+        $posts = Mahasiswa::orderBy('Nim', 'desc');
+        return view('mahasiswas.index', compact('mahasiswas'));
     }
 
     /**
@@ -33,7 +49,9 @@ class MahasiswaController extends Controller
      */
     public function create()
     {
-        return view('mahasiswas.create');
+        // return view('mahasiswas.create');
+        $kelas = Kelas::all(); //mendapatkan data dari tabel
+        return view('mahasiswas.create', ['kelas' => $kelas]);
     }
 
     /**
@@ -51,15 +69,36 @@ class MahasiswaController extends Controller
                 'Kelas' => 'required',
                 'Jurusan' => 'required',
                 'No_Handphone' => 'required',
-                'Email' => 'required',
-                'Tanggal_Lahir' => 'required',
+                // 'Email' => 'required',
+                // 'Tanggal_Lahir' => 'required',
             ]);
 
+        //fungsi eloquentment untuk menambah data
+        $mahasiswas= new Mahasiswa;
+        $mahasiswas->Nim=$request->get('Nim');
+        $mahasiswas->Nama=$request->get('Nama');
+        // $mahasiswas->Kelas=$request->get('Kelas');
+        $mahasiswas->Jurusan=$request->get('Jurusan');
+        $mahasiswas->No_Handphone=$request->get('No_Handphone');
+       // $mahasiswas->save();
+
         //fungsi eloquent untuk menambah data
-        Mahasiswa::create($request->all());
+        $kelas = new Kelas;
+        $kelas->id = $request->get('Kelas');
+
+        $mahasiswas->kelas()->associate($kelas);
+        $mahasiswas->save();
+        
         //jika data berhasil ditambahkan, akan kembali ke halaman utama
         return redirect()->route('mahasiswas.index')
-            ->with('success', 'Mahasiswa Berhasil Ditambahkan');
+             ->with('success', 'Mahasiswa Berhasil Ditambahkan');
+
+         
+        // //fungsi eloquent untuk menambah data
+        // Mahasiswa::create($request->all());
+        // //jika data berhasil ditambahkan, akan kembali ke halaman utama
+        // return redirect()->route('mahasiswas.index')
+        //     ->with('success', 'Mahasiswa Berhasil Ditambahkan');
     }
 
     /**
@@ -85,7 +124,8 @@ class MahasiswaController extends Controller
     {
         //menampilkan detail data dengan menemukan berdasarkan Nim Mahasiswa untuk diedit
         $Mahasiswa = Mahasiswa::find($Nim);
-        return view('mahasiswas.edit', compact('Mahasiswa'));
+        $kelas = Kelas::all();
+        return view('mahasiswas.edit', compact('Mahasiswa', 'kelas'));
     }
     
 
