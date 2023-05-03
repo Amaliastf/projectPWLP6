@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MahasiswaController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ArticleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,3 +24,4 @@ Auth::routes();
 
 Route::resource('mahasiswas', MahasiswaController::class);
 Route::get('mahasiswas/nilai/{Nim}', [MahasiswaController::class, 'nilai']);
+Route::resource('articles', ArticleController::class);
