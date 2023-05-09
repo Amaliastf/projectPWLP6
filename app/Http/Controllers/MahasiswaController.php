@@ -6,6 +6,8 @@ use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use App\Models\Kelas; 
 use illuminate\Support\Facades\DB;
+use illuminate\Support\Facades\Storage;
+use PDF;
 
 class MahasiswaController extends Controller
 {
@@ -62,6 +64,9 @@ class MahasiswaController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->file('image')){
+            $image_name = $request->file('image')->store('images', 'public');
+        }
         //melakukan validasi data
             $request->validate([
                 'Nim' => 'required',
@@ -77,6 +82,7 @@ class MahasiswaController extends Controller
         $mahasiswas= new Mahasiswa;
         $mahasiswas->Nim=$request->get('Nim');
         $mahasiswas->Nama=$request->get('Nama');
+        $mahasiswas->Foto=$image_name;
         // $mahasiswas->Kelas=$request->get('Kelas');
         $mahasiswas->Jurusan=$request->get('Jurusan');
         $mahasiswas->No_Handphone=$request->get('No_Handphone');
@@ -148,12 +154,42 @@ $request->validate([
     'Email' => 'required',
     'Tanggal_Lahir' => 'required',
     ]);
-    //fungsi eloquent untuk mengupdate data inputan kita
-    Mahasiswa::find($Nim)->update($request->all());
-    //jika data berhasil diupdate, akan kembali ke halaman utama
-    return redirect()->route('mahasiswas.index')
-    ->with('success', 'Mahasiswa Berhasil Diupdate');
+
+    // if ($request->file('image')) {
+    //     $image_name = $request->file('image')->store('mahasiswa', 'public');
+    // }
+    $mahasiswas = Mahasiswa::with('kelas')->where('Nim',$Nim)->first();
+    if ($mahasiswas->foto && file_exists(storage_path('app/public/' . $mahasiswas->foto))) {
+        Storage::delete('public/' . $mahasiswas->foto);  
     }
+    $image_name = $request->file('image')->store('images', 'public');
+
+    //fungsi eloquent untuk mengupdate data inputan kita
+    // Mahasiswa::find($Nim)->update($request->all());
+    // //jika data berhasil diupdate, akan kembali ke halaman utama
+    // return redirect()->route('mahasiswas.index')
+    // ->with('success', 'Mahasiswa Berhasil Diupdate');
+    $mahasiswas=Mahasiswa::with('kelas')->where('Nim',$Nim)->first();
+    $mahasiswas->Nim=$request->get('Nim');
+    $mahasiswas->Nama=$request->get('Nama');
+    $mahasiswas->Foto = $image_name;
+    $mahasiswas->Tanggal_lahir=$request->get('Tanggal_lahir');
+    $mahasiswas->Jurusan=$request->get('Jurusan');
+    $mahasiswas->Email=$request->get('Email');
+    $mahasiswas->No_Handphone=$request->get('No_Handphone');
+    $mahasiswas->save();
+
+    //Unutk menambahkan dengan relasi belongs to
+    $kelas = new Kelas;
+    $kelas->id = $request->get('Kelas');
+
+    $mahasiswas->kelas()->associate($kelas);
+    $mahasiswas->save();
+
+    //jika data berhasil
+    return redirect()->route('mahasiswas.index')->with('success', 'Mahasiswa Berhasil di Update');
+}
+
 
     /**
      * Remove the specified resource from storage.
@@ -172,5 +208,11 @@ return redirect()->route('mahasiswas.index')
     {
         $Mahasiswa = Mahasiswa::find($Nim);
         return view('mahasiswas.nilai', compact('Mahasiswa'));
+    }
+    public function cetak_khs($Nim)
+    {
+        $Mahasiswa = Mahasiswa::find($Nim);
+        $cetak_khs = PDF::loadView('mahasiswas.KHS', ['Mahasiswa' => $Mahasiswa]);
+        return $cetak_khs->stream();
     }
 };

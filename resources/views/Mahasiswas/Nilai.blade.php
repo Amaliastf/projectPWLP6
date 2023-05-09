@@ -23,7 +23,8 @@
             <span class="badge badge-primary badge-pill">{{$Mahasiswa->kelas->nama_kelas}}</span>
         </li>
     </ul> -->
-
+</div>
+<div>
     <ul class="list-group">
   <li class="list-group-item"><b>Nim : </b>{{$Mahasiswa->Nim}}</li>
   <li class="list-group-item"><b>Nama : </b>{{$Mahasiswa->Nama}}</li>
@@ -55,4 +56,7 @@
     </tr>
     @endforeach
 </table>
+<center>
+        <a href="{{ route('cetak_khs', $Mahasiswa->Nim) }}" class="btn btn-danger">Cetak PDF</a>
+    </center>
 @endsection
